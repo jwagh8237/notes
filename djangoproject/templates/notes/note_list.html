@@ -1,0 +1,150 @@
+{% extends 'home.html' %}
+
+{% block title %}Workspace | Notes{% endblock %}
+
+{% block content %}
+<section class="workspace">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <p class="eyebrow">Workspace</p>
+            <h1>Your notes</h1>
+        </div>
+
+        <a href="{% url 'note_create' %}" class="primary-action full-width">New note</a>
+
+        <div class="stats-grid">
+            <div>
+                <span>{{ active_count }}</span>
+                <small>Active</small>
+            </div>
+            <div>
+                <span>{{ pinned_count }}</span>
+                <small>Pinned</small>
+            </div>
+            <div>
+                <span>{{ archived_count }}</span>
+                <small>Archived</small>
+            </div>
+        </div>
+
+        <form method="get" class="filter-form">
+            <label for="search">Search</label>
+            <input id="search" type="search" name="q" value="{{ query }}" placeholder="Title, body, tags">
+
+            <label for="status">Status</label>
+            <select id="status" name="status">
+                <option value="active" {% if status == 'active' %}selected{% endif %}>Active</option>
+                <option value="archived" {% if status == 'archived' %}selected{% endif %}>Archived</option>
+                <option value="all" {% if status == 'all' %}selected{% endif %}>All</option>
+            </select>
+
+            <label for="category">Category</label>
+            <select id="category" name="category">
+                <option value="">All categories</option>
+                {% for category in categories %}
+                    <option value="{{ category.id }}" {% if selected_category == category.id|stringformat:'s' %}selected{% endif %}>
+                        {{ category.name }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <label for="priority">Priority</label>
+            <select id="priority" name="priority">
+                <option value="">Any priority</option>
+                {% for value, label in priority_choices %}
+                    <option value="{{ value }}" {% if selected_priority == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+
+            <button type="submit">Apply filters</button>
+            <a href="{% url 'note_list' %}" class="muted-link">Clear</a>
+        </form>
+
+        <form method="post" action="{% url 'category_create' %}" class="category-form">
+            {% csrf_token %}
+            <h2>Add category</h2>
+            {{ category_form.name }}
+            {{ category_form.color }}
+            <button type="submit">Add</button>
+        </form>
+
+        {% if categories %}
+            <div class="category-list">
+                {% for category in categories %}
+                    <div class="category-row">
+                        <span style="background: {{ category.color }}"></span>
+                        <strong>{{ category.name }}</strong>
+                        <form method="post" action="{% url 'category_delete' category.id %}">
+                            {% csrf_token %}
+                            <button type="submit" aria-label="Delete {{ category.name }}">Delete</button>
+                        </form>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </aside>
+
+    <section class="notes-area">
+        <div class="notes-toolbar">
+            <div>
+                <p class="eyebrow">Private to {{ user.username }}</p>
+                <h2>Notes board</h2>
+            </div>
+        </div>
+
+        {% if notes %}
+            <div class="notes-grid">
+                {% for note in notes %}
+                    <article class="note-card" style="background: {{ note.color }}">
+                        <div class="note-card-top">
+                            <div>
+                                {% if note.category %}
+                                    <span class="category-pill" style="background: {{ note.category.color }}">{{ note.category.name }}</span>
+                                {% endif %}
+                                <span class="priority priority-{{ note.priority }}">{{ note.get_priority_display }}</span>
+                            </div>
+                            {% if note.is_pinned %}
+                                <span class="pin-label">Pinned</span>
+                            {% endif %}
+                        </div>
+
+                        <h3>{{ note.title }}</h3>
+                        <p>{{ note.body|linebreaksbr|truncatechars:220 }}</p>
+
+                        {% if note.tag_list %}
+                            <div class="tags">
+                                {% for tag in note.tag_list %}
+                                    <span>#{{ tag }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        <div class="note-meta">Updated {{ note.updated_at|date:'M j, Y g:i A' }}</div>
+
+                        <div class="note-actions">
+                            <a href="{% url 'note_update' note.id %}">Edit</a>
+                            <form method="post" action="{% url 'note_toggle_pin' note.id %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                <button type="submit">{% if note.is_pinned %}Unpin{% else %}Pin{% endif %}</button>
+                            </form>
+                            <form method="post" action="{% url 'note_toggle_archive' note.id %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                <button type="submit">{% if note.is_archived %}Restore{% else %}Archive{% endif %}</button>
+                            </form>
+                            <a href="{% url 'note_delete' note.id %}" class="danger-link">Delete</a>
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <h2>No notes found</h2>
+                <p>Create your first note or change the filters to see more results.</p>
+                <a href="{% url 'note_create' %}" class="primary-action">Create note</a>
+            </div>
+        {% endif %}
+    </section>
+</section>
+{% endblock %}

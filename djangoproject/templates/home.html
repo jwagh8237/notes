@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+    {% load static %}
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>{% block title %}Notes{% endblock %}</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="{% static 'style.css' %}">
+    </head>
+    <body>
+        <nav class="topbar">
+            <a href="{% url 'note_list' %}" class="brand">J-Notes</a>
+
+            <button class="menu-btn" id="menuBtn" type="button" aria-label="Toggle navigation">&#9776;</button>
+
+            <div class="nav-links" id="navLinks">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'note_list' %}">Workspace</a>
+                    <a href="{% url 'note_create' %}">New note</a>
+                    <span class="nav-user">{{ user.username }}</span>
+                    <form method="post" action="{% url 'logout' %}" class="logout-form">
+                        {% csrf_token %}
+                        <button type="submit">Logout</button>
+                    </form>
+                {% else %}
+                    <a href="{% url 'login' %}">Login</a>
+                    <a href="{% url 'register' %}" class="button-link">Create account</a>
+                {% endif %}
+            </div>
+        </nav>
+
+        {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    <div class="message message-{{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <main>
+            {% block content %}{% endblock %}
+        </main>
+
+        <script>
+            const menuBtn = document.getElementById("menuBtn");
+            const navLinks = document.getElementById("navLinks");
+
+            if (menuBtn && navLinks) {
+                menuBtn.addEventListener("click", () => {
+                    navLinks.classList.toggle("active");
+                    menuBtn.textContent = navLinks.classList.contains("active") ? "\u2715" : "\u2630";
+                });
+            }
+        </script>
+    </body>
+</html>

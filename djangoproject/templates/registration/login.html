@@ -1,0 +1,27 @@
+{% extends 'home.html' %}
+
+{% block title %}Login | Notes{% endblock %}
+
+{% block content %}
+<section class="auth-shell">
+    <div class="auth-panel">
+        <p class="eyebrow">Welcome back</p>
+        <h1>Login to your notes</h1>
+        <form method="post" class="stack-form">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+
+            <label for="{{ form.username.id_for_label }}">Username</label>
+            {{ form.username }}
+            {{ form.username.errors }}
+
+            <label for="{{ form.password.id_for_label }}">Password</label>
+            {{ form.password }}
+            {{ form.password.errors }}
+
+            <button type="submit" class="primary-action">Login</button>
+        </form>
+        <p class="helper-text">New here? <a href="{% url 'register' %}">Create an account</a>.</p>
+    </div>
+</section>
+{% endblock %}
